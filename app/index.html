@@ -1,0 +1,82 @@
+<!doctype html>
+<html class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css(.) styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+  </head>
+  <body>
+    <!--[if lt IE 7]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+
+    <!-- Add your site or application content here -->
+    <section ng-mousemove="mousemove($event)" id="map" ng-controller="MapCtrl" >
+      <div
+        id="loader"
+        round-progress
+        max="100"
+        current="current"
+        color="#45ccce"
+        bgcolor="#eaeaea"
+        radius="20"
+        stroke="10">
+      </div>
+      <div class="movementcontrols">
+        <div ng-click="up()" id="up" class="vertical"><i class="glyphicon glyphicon-chevron-up"></i></div>
+        <div ng-click="down()" id="down" class="vertical"><i class="glyphicon glyphicon-chevron-down"></i></div>
+        <div ng-click="left()" id="left" class="horizontal"><i class="glyphicon glyphicon-chevron-left"></i></div>
+        <div ng-click="right()" id="right" class="horizontal"><i class="glyphicon glyphicon-chevron-right"></i></div>
+      </div>
+      <div hidden class="controls clearfix">
+        <div id="left" class="selectbox">
+          <span>Left box</span>
+        </div>
+        <div id="right" class="selectbox">
+          <span>Right box</span>
+        </div>
+      </div>
+      <div ui-map="myMap" ui-options="mapOptions" class="map-canvas"></div>
+    </section>
+
+    <!-- build:js(.) scripts/oldieshim.js -->
+    <!--[if lt IE 9]>
+    <script src="bower_components/es5-shim/es5-shim.js"></script>
+    <script src="bower_components/json3/lib/json3.js"></script>
+    <![endif]-->
+    <!-- endbuild -->
+
+    <!-- build:js(.) scripts/vendor.js -->
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="bower_components/angular-ui-utils/ui-utils.js"></script>
+    <script src="bower_components/angular-ui-map/ui-map.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
+    <script src="bower_components/angular-svg-round-progressbar/roundProgress.js"></script>
+    <!-- endbower -->
+    <!-- endbuild -->
+
+        <!-- build:js({.tmp,app}) scripts/scripts.js -->
+        <script src="scripts/app.js"></script>
+        <!-- endbuild -->
+
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&callback=onGoogleReady"></script>
+    <script type="text/javascript">
+      function onGoogleReady() {
+        angular.bootstrap(document.getElementById("map"), ['int14App']);
+      }
+    </script>
+</body>
+</html>

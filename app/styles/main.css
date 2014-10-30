@@ -1,0 +1,109 @@
+body, html, #map {
+  height: 100%;
+  width: 100%;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.controls {
+  position: absolute;
+  z-index: 100;
+  width: 100%;
+  text-align: center;
+}
+
+.controls .selectbox {
+  height: 200px;
+  width: 200px;
+  margin: 20px;
+  background-color: rgba(230,230,230,0.95);
+  border: thin solid black;
+  border-radius: 5px;
+  box-shadow: 1px 1px 21px 1px grey
+}
+
+.controls .selectbox:hover {
+  background-color: rgba(240,240,240,0.95);
+}
+.controls .selectbox span {
+  text-align: center;
+  vertical-align: middle;
+  line-height: 200px;
+}
+
+.movementcontrols > div{
+  z-index: 300;
+  font-size: 60px;
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  text-align: center;
+}
+
+.movementcontrols .vertical {
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+}
+
+.movementcontrols .horizontal {
+  margin-top: auto;
+  margin-bottom: auto;
+  top: 0;
+  bottom: 0;
+  line-height: 80px;
+}
+
+.movementcontrols #up {
+  top: 0;
+}
+
+.movementcontrols #down {
+  bottom: 0;
+}
+
+.movementcontrols #left {
+  left: 0;
+}
+
+.movementcontrols #right {
+  right: 0;
+}
+
+.controls #right {
+  float: right;
+}
+
+.controls #left {
+  float: left;
+}
+
+.cursor {
+  position: absolute;
+  font-size: 40px;
+  z-index: 200;
+}
+
+.cursor * {
+  display: none;
+}
+
+.controls button {
+  margin: 20px;
+}
+
+.map-canvas {
+  height: 100%;
+  cursor: none !important;
+}
+
+#loader {
+  position: absolute;
+  z-index: 1000;
+}
