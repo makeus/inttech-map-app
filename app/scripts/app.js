@@ -1,7 +1,6 @@
 'use strict';
 
-angular.module('int14App', ['ui.map', 'angular-svg-round-progress'])
-
+angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-websocket'])
 
 .constant('Configs', {
   distance: 100,
@@ -9,10 +8,67 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress'])
   clickDelay: 800,
   startX: 60.2042172,
   startY: 24.966259,
-  panamount: 100
+  panamount: 100,
+  zoomamount: 1
 })
 
-.controller('MapCtrl', function ($scope, $timeout, Configs) {
+.config(function(WebSocketProvider){
+  WebSocketProvider
+    .prefix('')
+    .uri('ws://localhost:8000/tracker-adapter/tracker');
+})
+
+.controller('MapCtrl', function ($scope, $timeout, WebSocket, Configs) {
+
+  WebSocket.onmessage(function(event) {
+    $('#map').trigger('mousemove', {
+      timeStamp: Date.now(),
+      y: event.y,
+      x: event.x
+    });
+  });
+
+  var fromPixelToLatLng = function(pixel) {
+    var scale = Math.pow(2, $scope.myMap.getZoom());
+    var proj = $scope.myMap.getProjection();
+    var bounds = $scope.myMap.getBounds();
+
+    var nw = proj.fromLatLngToPoint(
+      new google.maps.LatLng(
+        bounds.getNorthEast().lat(),
+        bounds.getSouthWest().lng()
+      ));
+    var point = new google.maps.Point();
+
+    point.x = pixel.x / scale + nw.x;
+    point.y = pixel.y / scale + nw.y;
+
+    return proj.fromPointToLatLng(point);
+  };
+
+  $scope.showZoom = false;
+  $scope.showMove = false;
+  $scope.clickActive = false;
+  $scope.markers = [];
+
+  $scope.toggleZoom = function() {
+    $scope.showZoom = !$scope.showZoom;
+    $scope.showMove = false;
+    $scope.clickActive = false;
+  };
+
+  $scope.toggleMove = function() {
+    $scope.showMove = !$scope.showMove;
+    $scope.showZoom = false;
+    $scope.clickActive = false;
+  };
+
+  $scope.toggleClick = function() {
+    $scope.clickActive = !$scope.clickActive;
+    $scope.showMove = false;
+    $scope.showZoom = false;
+  };
+
   $scope.mapOptions = {
     center: new google.maps.LatLng(Configs.startX, Configs.startY),
     zoom: 12,
@@ -20,20 +76,42 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress'])
     mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
-  $scope.up = function() {
+  $scope.moveup = function() {
     $scope.myMap.panBy(0, -Configs.panamount);
   };
 
-  $scope.down = function() {
+  $scope.movedown = function() {
     $scope.myMap.panBy(0, Configs.panamount);
   };
 
-  $scope.left = function() {
+  $scope.moveleft = function() {
     $scope.myMap.panBy(-Configs.panamount, 0);
   };
 
-  $scope.right = function() {
+  $scope.moveright = function() {
     $scope.myMap.panBy(Configs.panamount, 0);
+  };
+
+  $scope.zoomin = function() {
+    $scope.myMap.setZoom($scope.myMap.getZoom() + Configs.zoomamount);
+  };
+
+  $scope.zoomout = function() {
+    $scope.myMap.setZoom($scope.myMap.getZoom() - Configs.zoomamount);
+  };
+
+  $scope.addMarker = function($event, $params) {
+    $scope.markers.push(new google.maps.Marker({
+      map: $scope.myMap,
+      position: $params[0].latLng
+    }));
+  };
+
+  $scope.clear = function() {
+    for (var i = 0; i < $scope.markers.length; i++) {
+      $scope.markers[i].setMap(null);
+    }
+    $scope.markers = [];
   };
 
   var within = function(x1, y1, x2, y2, distanceX, distanceY) {
@@ -54,6 +132,9 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress'])
       var timer = timers[timestamp];
       if(!within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
           (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)) {
+
+        // Cursor moved too far -> delete
+
         $scope.current = 0;
         loader.hide();
         $timeout.cancel(timer.loadPromise);
@@ -61,51 +142,56 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress'])
       } else {
         if(event.timeStamp - timestamp > Configs.loadIconDelay) {
           if(!loader.is(':visible') && !timer.loadtime) {
-            $scope.current = 100;
-            timer.loadtime = event.timeStamp;
+
+            // Junk to keep the locked spot
 
             timer.loadPromise = $timeout(function() {
               loader.hide();
               $scope.current = 0;
-              console.log('cleared');
             }, Configs.clickDelay + 1000);
 
-            loader.css({
-              display: 'block',
-              top: y,
-              left: x
-            });
+            timer.element = document.elementFromPoint(x, y);
+
+            timer.clickspotX = x;
+            timer.clickspotY = y;
+
+            // Show loader
+
+            if($(timer.element).hasClass('clickable') || $scope.clickActive){
+              $scope.current = 100;
+              timer.loadtime = event.timeStamp;
+
+              loader.css({
+                display: 'block',
+                top: y-40,
+                left: x-30
+              });
+            }
             continue;
+
           }
           if(event.timeStamp - timer.loadtime > Configs.clickDelay) {
+
+            // Dwelling complete
+
             timers = {};
             $timeout.cancel(timer.loadPromise);
-            $('#' + loaderId + ' path').attr('stroke', '#009933');
+            $('#' + loaderId + ' path').attr('stroke', '#193441');
             $timeout(function() {
-              var up = $('#up');
-              var down = $('#down');
-              var left = $('#left');
-              var right = $('#right');
-
-              if(within(up.offset().left, up.offset().top, x, y, 400, 100)) {
-                $scope.up();
+              if($(timer.element).hasClass('clickable')) {
+                $(timer.element).click();
+              } else {
+                if($scope.clickActive) {
+                 var myLatlng = fromPixelToLatLng({x: timer.clickspotX, y: timer.clickspotY});
+                 $scope.markers.push(new google.maps.Marker({
+                    position: myLatlng,
+                    map: $scope.myMap
+                  }));
+                }
               }
-
-              if(within(down.offset().left, down.offset().top, x, y, 400, 100)) {
-                $scope.down();
-              }
-
-              if(within(left.offset().left, left.offset().top, x, y, 100, 400)) {
-                $scope.left();
-              }
-
-              if(within(right.offset().left, right.offset().top, x, y, 100, 400)) {
-                $scope.right();
-              }
-
               $scope.current = 0;
               loader.hide();
-              $('#' + loaderId + ' path').attr('stroke', '#45ccce');
+              $('#' + loaderId + ' path').attr('stroke', '#3E606F');
             }, 500);
             break;
           }
@@ -117,30 +203,6 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress'])
     timers[event.timeStamp] = {
       x: event.pageX,
       y: event.pageY
-/*      clickPromise: $timeout(function() {
-        _.each(timers, function(timer, timestamp) {
-          deleteTimer(timer, timestamp);
-        });
-
-        var e = new jQuery.Event('click');
-        e.pageX = event.pageX;
-        e.pageY = event.pageY;
-
-        $('#map').trigger(e);
-
-        $scope.current = 0;
-        loader.hide();
-      }, Configs.clickDelay),
-      loadingPromise: $timeout(function() {
-        if(!loader.is(':visible')) {
-          $scope.current = 100;
-          loader.css({
-            display: 'block',
-            top: event.pageY,
-            left: event.pageX
-          });
-        }
-      }, Configs.loadIconDelay)*/
     };
   };
 

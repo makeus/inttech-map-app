@@ -21,32 +21,42 @@
     <![endif]-->
 
     <!-- Add your site or application content here -->
-    <section ng-mousemove="mousemove($event)" id="map" ng-controller="MapCtrl" >
-      <div
-        id="loader"
-        round-progress
-        max="100"
-        current="current"
-        color="#45ccce"
-        bgcolor="#eaeaea"
-        radius="20"
-        stroke="10">
-      </div>
-      <div class="movementcontrols">
-        <div ng-click="up()" id="up" class="vertical"><i class="glyphicon glyphicon-chevron-up"></i></div>
-        <div ng-click="down()" id="down" class="vertical"><i class="glyphicon glyphicon-chevron-down"></i></div>
-        <div ng-click="left()" id="left" class="horizontal"><i class="glyphicon glyphicon-chevron-left"></i></div>
-        <div ng-click="right()" id="right" class="horizontal"><i class="glyphicon glyphicon-chevron-right"></i></div>
-      </div>
-      <div hidden class="controls clearfix">
-        <div id="left" class="selectbox">
-          <span>Left box</span>
+    <section id="map" ng-mousemove="mousemove($event)" ng-controller="MapCtrl" >
+      <div class="map-section">
+        <div
+          id="loader"
+          round-progress
+          max="100"
+          current="current"
+          color="#3E606F"
+          bgcolor="#eaeaea"
+          radius="20"
+          stroke="10">
         </div>
-        <div id="right" class="selectbox">
-          <span>Right box</span>
+        <div ng-if="showMove" class="mapcontrols movementcontrols">
+          <div ng-click="moveup()" class="up vertical clickable"><i ng-click="moveup()" class="clickable glyphicon glyphicon-chevron-up"></i></div>
+          <div ng-click="movedown()" class="down vertical clickable"><i ng-click="movedown()" class="clickable glyphicon glyphicon-chevron-down"></i></div>
+          <div ng-click="moveleft()" class="left horizontal clickable"><i ng-click="moveleft()" class="clickable glyphicon glyphicon-chevron-left"></i></div>
+          <div ng-click="moveright()" class="right horizontal clickable"><i ng-click="moveright()" class="clickable glyphicon glyphicon-chevron-right"></i></div>
+        </div>
+        <div ng-if="showZoom" class="mapcontrols zoomcontrols">
+          <div ng-click="zoomout()" class="top clickable"><i ng-click="zoomout()" class="clickable glyphicon glyphicon-minus-sign"></i></div>
+          <div ng-click="zoomin()" class="bottom clickable"><i ng-click="zoomin()" class="clickable glyphicon glyphicon-plus-sign"></i></div>
+        </div>
+        <button ng-click="clear()" ng-if="clickActive" class="clearbtn right top btn btn-lg btn-danger clickable"><i class="glyphicon glyphicon-remove"></i></button>
+        <div ui-map="myMap" ui-event="{'map-click': 'addMarker($event, $params)'}" ui-options="mapOptions" class="map-canvas"></div>
+      </div>
+      <div class="controls clearfix">
+        <div ng-class="{'active': showMove}" ng-click="toggleMove()" id="left" class="selectbox clickable">
+          <i class="glyphicon glyphicon-move"></i>
+        </div>
+        <div ng-class="{'active': showZoom}" ng-click="toggleZoom()" id="middle" class="selectbox clickable">
+          <i class="glyphicon glyphicon-zoom-in"></i>
+        </div>
+        <div ng-class="{'active': clickActive}" ng-click="toggleClick()" id="right" class="selectbox clickable">
+          <i class="glyphicon glyphicon-map-marker"></i>
         </div>
       </div>
-      <div ui-map="myMap" ui-options="mapOptions" class="map-canvas"></div>
     </section>
 
     <!-- build:js(.) scripts/oldieshim.js -->
@@ -65,6 +75,7 @@
     <script src="bower_components/angular-ui-map/ui-map.js"></script>
     <script src="bower_components/underscore/underscore.js"></script>
     <script src="bower_components/angular-svg-round-progressbar/roundProgress.js"></script>
+    <script src="bower_components/angular-websocket/angular-websocket.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
 

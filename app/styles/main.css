@@ -10,33 +10,60 @@ body, html, #map {
   overflow: hidden;
 }
 
+i {
+  color: #193441;
+}
+
+.map-section {
+  height: 80%;
+  position: relative;
+}
+
 .controls {
-  position: absolute;
   z-index: 100;
   width: 100%;
   text-align: center;
+  height: 20%;
+  display: table;
+  table-layout: fixed;
 }
 
 .controls .selectbox {
-  height: 200px;
-  width: 200px;
-  margin: 20px;
+  margin: 0 -1px;
+  width: 33.5%;
   background-color: rgba(230,230,230,0.95);
-  border: thin solid black;
-  border-radius: 5px;
-  box-shadow: 1px 1px 21px 1px grey
+  display: table-cell;
+  vertical-align: middle;
+  box-shadow: inset -1px -4px 3px rgba(0, 0, 0, 0.45);
+  border-top: 1px solid #91AA9D;
+}
+
+.controls .selectbox.active i {
+  color: #5B98A6;
 }
 
 .controls .selectbox:hover {
   background-color: rgba(240,240,240,0.95);
 }
-.controls .selectbox span {
-  text-align: center;
-  vertical-align: middle;
-  line-height: 200px;
+
+.controls #left.selectbox {
+  background-color: #FCFFF5;
 }
 
-.movementcontrols > div{
+.controls #middle.selectbox {
+  background-color: #D1DBBD;
+}
+
+.controls #right.selectbox {
+  background-color: #91AA9D;
+}
+
+.controls .selectbox i {
+  text-align: center;
+  font-size: 5em;
+}
+
+.mapcontrols > div {
   z-index: 300;
   font-size: 60px;
   width: 80px;
@@ -45,43 +72,70 @@ body, html, #map {
   text-align: center;
 }
 
-.movementcontrols .vertical {
+.mapcontrols .vertical {
   margin-left: auto;
   margin-right: auto;
   left: 0;
   right: 0;
+  height: 150px;
+  width: 300px;
+  line-height: 150px;
+  vertical-align: middle;
 }
 
-.movementcontrols .horizontal {
+.mapcontrols .horizontal {
   margin-top: auto;
   margin-bottom: auto;
   top: 0;
   bottom: 0;
-  line-height: 80px;
+  line-height: 300px;
+  vertical-align: middle;
+  height: 300px;
+  width: 150px;
 }
 
-.movementcontrols #up {
+.zoomcontrols {
+  position: absolute;
+  height: 70%;
+  top: 15%;
+  left: 30%;
+  margin-bottom: auto;
+  margin-right: auto;
+}
+
+.zoomcontrols div {
+  width: 200px;
+  height: 200px;
+  line-height: 200px;
+  vertical-align: middle;
+}
+
+.zoomcontrols div i {
+  vertical-align: middle;
+}
+
+.zoomcontrols .top {
   top: 0;
 }
 
-.movementcontrols #down {
+.zoomcontrols .bottom {
   bottom: 0;
 }
 
-.movementcontrols #left {
-  left: 0;
+.up {
+  top: 20px;
 }
 
-.movementcontrols #right {
-  right: 0;
+.down {
+  bottom: 20px;
 }
 
-.controls #right {
-  float: right;
+.left {
+  left: 20px;
 }
 
-.controls #left {
-  float: left;
+.right {
+  right: 20px;
 }
 
 .cursor {
@@ -103,7 +157,21 @@ body, html, #map {
   cursor: none !important;
 }
 
+button.clearbtn {
+  z-index: 300;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 200px;
+  height: 80px;
+}
+
+button.clearbtn i {
+  font-size: 40px;
+}
+
 #loader {
   position: absolute;
   z-index: 1000;
+  display: none;
 }
