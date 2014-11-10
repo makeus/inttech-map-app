@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" >
   <head>
     <meta charset="utf-8">
     <title></title>
@@ -15,13 +15,16 @@
     <link rel="stylesheet" href="styles/main.css">
     <!-- endbuild -->
   </head>
-  <body>
+  <body ng-controller="MainCtrl">
     <!--[if lt IE 7]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
-    <!-- Add your site or application content here -->
-    <section id="map" ng-mousemove="mousemove($event)" ng-controller="MapCtrl" >
+    <button class="btn btn-success startbtn" ng-click="start()">
+      <span class="startbtntext loadingtext"><img class="loading" src="img/ajax-loader.svg" alt="loading"/></span>
+    </button>
+
+    <section id="map" ng-hide="hidemap" class="invisible" ng-controller="MapCtrl">
       <div class="map-section">
         <div
           id="loader"
@@ -43,7 +46,6 @@
           <div ng-click="zoomout()" class="top clickable"><i ng-click="zoomout()" class="clickable glyphicon glyphicon-minus-sign"></i></div>
           <div ng-click="zoomin()" class="bottom clickable"><i ng-click="zoomin()" class="clickable glyphicon glyphicon-plus-sign"></i></div>
         </div>
-        <button ng-click="clear()" ng-if="clickActive" class="clearbtn right top btn btn-lg btn-danger clickable"><i class="glyphicon glyphicon-remove"></i></button>
         <div ui-map="myMap" ui-event="{'map-click': 'addMarker($event, $params)'}" ui-options="mapOptions" class="map-canvas"></div>
       </div>
       <div class="controls clearfix">
@@ -57,6 +59,7 @@
           <i class="glyphicon glyphicon-map-marker"></i>
         </div>
       </div>
+      <button ng-click="end()" class="top left disconnect clickable btn btn-danger">Disconnect</button>
     </section>
 
     <!-- build:js(.) scripts/oldieshim.js -->
@@ -86,7 +89,7 @@
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&callback=onGoogleReady"></script>
     <script type="text/javascript">
       function onGoogleReady() {
-        angular.bootstrap(document.getElementById("map"), ['int14App']);
+        angular.bootstrap(document.getElementsByTagName("body"), ['int14App']);
       }
     </script>
 </body>

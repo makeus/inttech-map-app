@@ -15,18 +15,63 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 .config(function(WebSocketProvider){
   WebSocketProvider
     .prefix('')
-    .uri('ws://localhost:8000/tracker-adapter/tracker');
+    .uri('ws://echo.websocket.org');
+})
+
+.controller('MainCtrl', function ($scope, WebSocket) {
+
+  $scope.isConnected = false;
+
+  WebSocket.onmessage(function(message) {
+    console.log(message);
+    var data = JSON.parse(message.data);
+    console.log(data);
+    var x =  data.bestX * $(window).width();
+    var y = data.bestY * $(window).height();
+    $('#map').trigger('mousemove', {
+      timeStamp: Date.now(),
+      pageY: y,
+      pageX: x
+    });
+  });
+
+  var showError = function() {
+    $scope.hidemap = true;
+    $('.startbtn').removeClass('btn-success').addClass('btn-danger');
+    $('.startbtn .loading').replaceWith('<i class="loading glyphicon glyphicon-warning-sign"></i>');
+  };
+
+  WebSocket.onopen(function() {
+    $scope.isConnected = true;
+    $('.startbtn .loading').replaceWith('<i class="loading glyphicon glyphicon-play-circle"></i>');
+  });
+
+  WebSocket.onerror(function() {
+    showError();
+  });
+
+  $scope.start = function() {
+    if($scope.isConnected) {
+      WebSocket.send('setup');
+      $('#map').removeClass('invisible');
+    }
+  };
+
+  $scope.connect = function() {
+    if(!$scope.isConnected) {
+      WebSocket.new();
+    }
+  };
+
+  $scope.end = function() {
+    WebSocket.send('disconnect');
+    WebSocket.close();
+    showError();
+  };
+
 })
 
 .controller('MapCtrl', function ($scope, $timeout, WebSocket, Configs) {
-
-  WebSocket.onmessage(function(event) {
-    $('#map').trigger('mousemove', {
-      timeStamp: Date.now(),
-      y: event.y,
-      x: event.x
-    });
-  });
 
   var fromPixelToLatLng = function(pixel) {
     var scale = Math.pow(2, $scope.myMap.getZoom());
@@ -114,6 +159,17 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     $scope.markers = [];
   };
 
+  var setMarker = function(x, y) {
+    var latLng = fromPixelToLatLng({x: x, y: y});
+    if(angular.isUndefined($scope.marker)) {
+      $scope.marker = new google.maps.Marker({
+        position: latLng,
+        map: $scope.myMap
+      });
+    }
+    $scope.marker.setPosition(latLng);
+  };
+
   var within = function(x1, y1, x2, y2, distanceX, distanceY) {
     return !(x1 - distanceX > x2 || x1 + distanceX < x2 || y1 - distanceY > y2 || y1 + distanceY < y2);
   };
@@ -122,8 +178,13 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
   var loaderId = 'loader';
   $scope.loaderId = loaderId;
 
+  $('#map').mousemove(function(event,a) {
+    var extended = _.extend(event, a);
+    $scope.mousemove(extended);
+  });
 
   $scope.mousemove = function(event) {
+    console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
     var x = event.pageX;
     var y = event.pageY;
     var loader = $('#' + loaderId);
@@ -182,11 +243,7 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
                 $(timer.element).click();
               } else {
                 if($scope.clickActive) {
-                 var myLatlng = fromPixelToLatLng({x: timer.clickspotX, y: timer.clickspotY});
-                 $scope.markers.push(new google.maps.Marker({
-                    position: myLatlng,
-                    map: $scope.myMap
-                  }));
+                 setMarker(timer.clickspotX, timer.clickspotY);
                 }
               }
               $scope.current = 0;
