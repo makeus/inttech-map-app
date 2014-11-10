@@ -3,8 +3,8 @@
 angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-websocket'])
 
 .constant('Configs', {
-  distance: 100,
-  loadIconDelay: 1000,
+  distance: 80,
+  loadIconDelay: 500,
   clickDelay: 800,
   startX: 60.2042172,
   startY: 24.966259,
@@ -21,6 +21,7 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 .controller('MainCtrl', function ($scope, WebSocket) {
 
   $scope.isConnected = false;
+  $scope.hidemap = true;
 
   WebSocket.onmessage(function(message) {
     console.log(message);
@@ -35,12 +36,6 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     });
   });
 
-  var showError = function() {
-    $scope.hidemap = true;
-    $('.startbtn').removeClass('btn-success').addClass('btn-danger');
-    $('.startbtn .loading').replaceWith('<i class="loading glyphicon glyphicon-warning-sign"></i>');
-  };
-
   WebSocket.onopen(function() {
     $scope.isConnected = true;
     $('.startbtn .loading').replaceWith('<i class="loading glyphicon glyphicon-play-circle"></i>');
@@ -50,10 +45,16 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     showError();
   });
 
+  var showError = function() {
+    $scope.hidemap = true;
+    $('.startbtn').removeClass('btn-success').addClass('btn-danger');
+    $('.startbtn .loading').replaceWith('<i class="loading glyphicon glyphicon-warning-sign"></i>');
+  };
+
   $scope.start = function() {
     if($scope.isConnected) {
       WebSocket.send('setup');
-      $('#map').removeClass('invisible');
+      $scope.hidemap = false;
     }
   };
 
@@ -64,9 +65,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
   };
 
   $scope.end = function() {
-    WebSocket.send('disconnect');
-    WebSocket.close();
-    showError();
+    WebSocket.send('end-stream');
+    $scope.hidemap = true;
   };
 
 })
@@ -174,7 +174,22 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     return !(x1 - distanceX > x2 || x1 + distanceX < x2 || y1 - distanceY > y2 || y1 + distanceY < y2);
   };
 
-  var timers = {};
+  var setClickColor = function() {
+    $('#' + loaderId + ' path').attr('stroke', '#193441');
+  };
+
+  var setLoadColor = function() {
+    $('#' + loaderId + ' path').attr('stroke', '#3E606F');
+  };
+
+  var setTimer = function(event) {
+    $scope.timer = {
+      x: event.pageX,
+      y: event.pageY,
+      timestamp: event.timeStamp
+    };
+  };
+
   var loaderId = 'loader';
   $scope.loaderId = loaderId;
 
@@ -184,84 +199,83 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
   });
 
   $scope.mousemove = function(event) {
-    console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
+    var loader = $('#' + loaderId);
+    if(loader.is(':animated')) {
+      return;
+    }
+    // console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
     var x = event.pageX;
     var y = event.pageY;
-    var loader = $('#' + loaderId);
+    var timer = $scope.timer;
+    if(angular.isUndefined(timer) || !within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
+        (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)) {
 
-    for(var timestamp in timers) {
-      var timer = timers[timestamp];
-      if(!within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
-          (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)) {
-
-        // Cursor moved too far -> delete
-
+      // Cursor moved too far -> set new
+      $scope.$apply(function() {
         $scope.current = 0;
-        loader.hide();
+      });
+      loader.fadeOut(1000);
+      if(angular.isDefined(timer)) {
         $timeout.cancel(timer.loadPromise);
-        delete timers[timestamp];
-      } else {
-        if(event.timeStamp - timestamp > Configs.loadIconDelay) {
-          if(!loader.is(':visible') && !timer.loadtime) {
+      }
+      setTimer(event);
+    } else {
+      if(event.timeStamp - timer.timestamp > Configs.loadIconDelay) {
+        if(!loader.is(':visible')) {
+          timer.loadPromise = $timeout(function() {
+            $scope.current = 0;
+            loader.fadeOut(1000);
+          }, Configs.clickDelay + 1000);
 
-            // Junk to keep the locked spot
+          timer.element = document.elementFromPoint(x, y);
 
-            timer.loadPromise = $timeout(function() {
-              loader.hide();
-              $scope.current = 0;
-            }, Configs.clickDelay + 1000);
+          // Show loader
 
-            timer.element = document.elementFromPoint(x, y);
-
-            timer.clickspotX = x;
-            timer.clickspotY = y;
-
-            // Show loader
-
-            if($(timer.element).hasClass('clickable') || $scope.clickActive){
+          if($(timer.element).hasClass('clickable') || $scope.clickActive){
+            $scope.$apply(function() {
               $scope.current = 100;
-              timer.loadtime = event.timeStamp;
+            });
+            timer.loadtime = event.timeStamp;
 
-              loader.css({
-                display: 'block',
-                top: y-40,
-                left: x-30
-              });
-            }
-            continue;
+            timer.markerX = x;
+            timer.markerY = y;
 
+            loader.css({
+              display: 'block',
+              top: y-40,
+              left: x-30
+            });
           }
-          if(event.timeStamp - timer.loadtime > Configs.clickDelay) {
-
-            // Dwelling complete
-
-            timers = {};
-            $timeout.cancel(timer.loadPromise);
-            $('#' + loaderId + ' path').attr('stroke', '#193441');
-            $timeout(function() {
-              if($(timer.element).hasClass('clickable')) {
-                $(timer.element).click();
-              } else {
-                if($scope.clickActive) {
-                 setMarker(timer.clickspotX, timer.clickspotY);
-                }
-              }
-              $scope.current = 0;
-              loader.hide();
-              $('#' + loaderId + ' path').attr('stroke', '#3E606F');
-            }, 500);
-            break;
-          }
+          return;
         }
-        break;
+        if(event.timeStamp - timer.loadtime > Configs.clickDelay) {
+
+          // Dwelling complete
+          $timeout.cancel(timer.loadPromise);
+          var markerX = timer.markerX;
+          var markerY = timer.markerY;
+          var clickElement = timer.element;
+          setTimer(event);
+          setClickColor();
+          $timeout(function() {
+            if($(clickElement).hasClass('clickable')) {
+              $(clickElement).click();
+            } else if($scope.clickActive) {
+              setMarker(markerX, markerY);
+              $scope.toggleClick();
+            }
+            loader.fadeOut(500, function() {
+              $scope.$apply(function() {
+                $scope.current = 0;
+                setLoadColor();
+                timer.timestamp = Date.now();
+              });
+            });
+          }, 500);
+          return;
+        }
       }
     }
-
-    timers[event.timeStamp] = {
-      x: event.pageX,
-      y: event.pageY
-    };
   };
-
 });
 

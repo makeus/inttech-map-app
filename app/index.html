@@ -24,7 +24,7 @@
       <span class="startbtntext loadingtext"><img class="loading" src="img/ajax-loader.svg" alt="loading"/></span>
     </button>
 
-    <section id="map" ng-hide="hidemap" class="invisible" ng-controller="MapCtrl">
+    <section id="map" ng-class="{'invisible': hidemap}" class="invisible" ng-controller="MapCtrl">
       <div class="map-section">
         <div
           id="loader"
@@ -59,7 +59,7 @@
           <i class="glyphicon glyphicon-map-marker"></i>
         </div>
       </div>
-      <button ng-click="end()" class="top left disconnect clickable btn btn-danger">Disconnect</button>
+      <button ng-click="end()" class="top left disconnect clickable btn btn-danger">Lopeta</button>
     </section>
 
     <!-- build:js(.) scripts/oldieshim.js -->
