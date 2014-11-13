@@ -24,16 +24,19 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
   $scope.hidemap = true;
 
   WebSocket.onmessage(function(message) {
-    console.log(message);
+    if(angular.isUndefined(message.data)) {
+      return;
+    }
     var data = JSON.parse(message.data);
-    console.log(data);
-    var x =  data.bestX * $(window).width();
-    var y = data.bestY * $(window).height();
-    $('#map').trigger('mousemove', {
-      timeStamp: Date.now(),
-      pageY: y,
-      pageX: x
-    });
+    if(angular.isDefined(data.bestValid) && data.bestValid) {
+      var x =  data.bestX * $(window).width();
+      var y = data.bestY * $(window).height();
+      $('#map').trigger('mousemove', {
+        timeStamp: Date.now(),
+        pageY: y,
+        pageX: x
+      });
+    }
   });
 
   WebSocket.onopen(function() {
