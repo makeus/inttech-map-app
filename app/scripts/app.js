@@ -3,7 +3,7 @@
 angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-websocket'])
 
 .constant('Configs', {
-  distance: 80,
+  distance: 200,
   loadIconDelay: 500,
   clickDelay: 800,
   startX: 60.2042172,
@@ -18,10 +18,13 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     .uri('ws://localhost:8080/tracker-adapter/tracker');
 })
 
-.controller('MainCtrl', function ($scope, WebSocket) {
+.controller('MainCtrl', function ($scope, WebSocket, Configs) {
 
   $scope.isConnected = false;
   $scope.hidemap = true;
+
+  var previousX;
+  var previousY;
 
   WebSocket.onmessage(function(message) {
     if(angular.isUndefined(message.data)) {
@@ -29,13 +32,19 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     }
     var data = JSON.parse(message.data);
     if(angular.isDefined(data.bestValid) && data.bestValid) {
-      var x =  data.bestX * $(window).width();
+      var x = data.bestX * $(window).width();
       var y = data.bestY * $(window).height();
-      $('#map').trigger('mousemove', {
-        timeStamp: Date.now(),
-        pageY: y,
-        pageX: x
-      });
+
+      // Ignore the first value outside the distance
+      if(Math.abs(data.x - previousX) < Configs.distance && Math.abs(data.y - previousY) < Configs.distance) {
+        $('#map').trigger('mousemove', {
+          timeStamp: Date.now(),
+          pageY: y,
+          pageX: x
+        });
+      }
+      previousY = data.y;
+      previousX = data.x;
     }
   });
 
@@ -174,7 +183,7 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
   };
 
   var within = function(x1, y1, x2, y2, distanceX, distanceY) {
-    return !(x1 - distanceX > x2 || x1 + distanceX < x2 || y1 - distanceY > y2 || y1 + distanceY < y2);
+    return (Math.abs(x1 - x2) < distanceX) && (Math.abs(y1 - y2) < distanceY);
   };
 
   var setClickColor = function() {
@@ -189,7 +198,10 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     $scope.timer = {
       x: event.pageX,
       y: event.pageY,
-      timestamp: event.timeStamp
+      totalX: event.pageX,
+      totalY: event.pageY,
+      timestamp: event.timeStamp,
+      samples: 1
     };
   };
 
@@ -210,8 +222,11 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     var x = event.pageX;
     var y = event.pageY;
     var timer = $scope.timer;
-    if(angular.isUndefined(timer) || !within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
-        (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)) {
+    if(
+      angular.isUndefined(timer) ||
+      !within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
+      (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)
+    ) {
 
       // Cursor moved too far -> set new
       $scope.$apply(function() {
@@ -224,16 +239,32 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
       setTimer(event);
     } else {
       if(event.timeStamp - timer.timestamp > Configs.loadIconDelay) {
+
+        var mouseoverel = document.elementFromPoint(x, y);
+
+        if($(mouseoverel).hasClass('clickable')) {
+          timer.element = mouseoverel;
+        }
+
+        timer.samples += 1;
+        timer.totalX = timer.totalX + x;
+        timer.totalY = timer.totalY + y;
+        timer.x = timer.totalX / timer.samples;
+        timer.y = timer.totalY / timer.samples;
+
+        loader.css({
+          top: timer.y - 30,
+          left: timer.x - 40
+        });
+
         if(!loader.is(':visible')) {
+
           timer.loadPromise = $timeout(function() {
             $scope.current = 0;
             loader.fadeOut(1000);
           }, Configs.clickDelay + 1000);
 
-          timer.element = document.elementFromPoint(x, y);
-
           // Show loader
-
           if($(timer.element).hasClass('clickable') || $scope.clickActive){
             $scope.$apply(function() {
               $scope.current = 100;
@@ -245,8 +276,6 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 
             loader.css({
               display: 'block',
-              top: y-40,
-              left: x-30
             });
           }
           return;
@@ -255,8 +284,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 
           // Dwelling complete
           $timeout.cancel(timer.loadPromise);
-          var markerX = timer.markerX;
-          var markerY = timer.markerY;
+          var markerX = timer.x-10;
+          var markerY = timer.y;
           var clickElement = timer.element;
           setTimer(event);
           setClickColor();
