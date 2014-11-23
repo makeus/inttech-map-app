@@ -197,3 +197,9 @@ button.startbtn i {
   display: block;
   top: 7px;
 }
+
+.mapcontrols .eyestatus {
+  width: 150px;
+  height: 70px;
+}
+

@@ -35,6 +35,18 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
       var x = data.bestX * $(window).width();
       var y = data.bestY * $(window).height();
 
+      if(data.leftEyeOK) {
+        $('.lefteye').css('color', 'green');
+      } else {
+        $('.lefteye').css('color', 'red');
+      }
+
+      if(data.rightEyeOK) {
+        $('.righteye').css('color', 'green');
+      } else {
+        $('.righteye').css('color', 'red');
+      }
+
       // Ignore the first value outside the distance
       if(Math.abs(data.x - previousX) < Configs.distance && Math.abs(data.y - previousY) < Configs.distance) {
         $('#map').trigger('mousemove', {
@@ -84,25 +96,6 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 })
 
 .controller('MapCtrl', function ($scope, $timeout, WebSocket, Configs) {
-
-  var fromPixelToLatLng = function(pixel) {
-    var scale = Math.pow(2, $scope.myMap.getZoom());
-    var proj = $scope.myMap.getProjection();
-    var bounds = $scope.myMap.getBounds();
-
-    var nw = proj.fromLatLngToPoint(
-      new google.maps.LatLng(
-        bounds.getNorthEast().lat(),
-        bounds.getSouthWest().lng()
-      ));
-    var point = new google.maps.Point();
-
-    point.x = pixel.x / scale + nw.x;
-    point.y = pixel.y / scale + nw.y;
-
-    return proj.fromPointToLatLng(point);
-  };
-
   $scope.showZoom = false;
   $scope.showMove = false;
   $scope.clickActive = false;
@@ -170,144 +163,167 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     }
     $scope.markers = [];
   };
+})
 
-  var setMarker = function(x, y) {
-    var latLng = fromPixelToLatLng({x: x, y: y});
-    if(angular.isUndefined($scope.marker)) {
-      $scope.marker = new google.maps.Marker({
-        position: latLng,
-        map: $scope.myMap
-      });
-    }
-    $scope.marker.setPosition(latLng);
-  };
+.directive('eyetrackermovement', function ($timeout, Configs) {
 
-  var within = function(x1, y1, x2, y2, distanceX, distanceY) {
-    return (Math.abs(x1 - x2) < distanceX) && (Math.abs(y1 - y2) < distanceY);
-  };
+  return function ($scope, element) {
+    element.mousemove(function(event,a) {
+      var extended = _.extend(event, a);
+      $scope.mousemove(extended);
+    });
 
-  var setClickColor = function() {
-    $('#' + loaderId + ' path').attr('stroke', '#193441');
-  };
+    var loaderId = 'loader';
+    $scope.loaderId = loaderId;
 
-  var setLoadColor = function() {
-    $('#' + loaderId + ' path').attr('stroke', '#3E606F');
-  };
+    var fromPixelToLatLng = function(pixel) {
+      var scale = Math.pow(2, $scope.myMap.getZoom());
+      var proj = $scope.myMap.getProjection();
+      var bounds = $scope.myMap.getBounds();
 
-  var setTimer = function(event) {
-    $scope.timer = {
-      x: event.pageX,
-      y: event.pageY,
-      totalX: event.pageX,
-      totalY: event.pageY,
-      timestamp: event.timeStamp,
-      samples: 1
+      var nw = proj.fromLatLngToPoint(
+        new google.maps.LatLng(
+          bounds.getNorthEast().lat(),
+          bounds.getSouthWest().lng()
+        ));
+      var point = new google.maps.Point();
+
+      point.x = pixel.x / scale + nw.x;
+      point.y = pixel.y / scale + nw.y;
+
+      return proj.fromPointToLatLng(point);
     };
-  };
 
-  var loaderId = 'loader';
-  $scope.loaderId = loaderId;
-
-  $('#map').mousemove(function(event,a) {
-    var extended = _.extend(event, a);
-    $scope.mousemove(extended);
-  });
-
-  $scope.mousemove = function(event) {
-    var loader = $('#' + loaderId);
-    if(loader.is(':animated')) {
-      return;
-    }
-    // console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
-    var x = event.pageX;
-    var y = event.pageY;
-    var timer = $scope.timer;
-    if(
-      angular.isUndefined(timer) ||
-      !within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
-      (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)
-    ) {
-
-      // Cursor moved too far -> set new
-      $scope.$apply(function() {
-        $scope.current = 0;
-      });
-      loader.fadeOut(1000);
-      if(angular.isDefined(timer)) {
-        $timeout.cancel(timer.loadPromise);
-      }
-      setTimer(event);
-    } else {
-      if(event.timeStamp - timer.timestamp > Configs.loadIconDelay) {
-
-        var mouseoverel = document.elementFromPoint(x, y);
-
-        if($(mouseoverel).hasClass('clickable')) {
-          timer.element = mouseoverel;
-        }
-
-        timer.samples += 1;
-        timer.totalX = timer.totalX + x;
-        timer.totalY = timer.totalY + y;
-        timer.x = timer.totalX / timer.samples;
-        timer.y = timer.totalY / timer.samples;
-
-        loader.css({
-          top: timer.y - 30,
-          left: timer.x - 40
+    var setMarker = function(x, y) {
+      var latLng = fromPixelToLatLng({x: x, y: y});
+      if(angular.isUndefined($scope.marker)) {
+        $scope.marker = new google.maps.Marker({
+          position: latLng,
+          map: $scope.myMap
         });
+      }
+      $scope.marker.setPosition(latLng);
+    };
 
-        if(!loader.is(':visible')) {
+    var within = function(x1, y1, x2, y2, distanceX, distanceY) {
+      return (Math.abs(x1 - x2) < distanceX) && (Math.abs(y1 - y2) < distanceY);
+    };
 
-          timer.loadPromise = $timeout(function() {
-            $scope.current = 0;
-            loader.fadeOut(1000);
-          }, Configs.clickDelay + 1000);
+    var setClickColor = function() {
+      $('#' + loaderId + ' path').attr('stroke', '#193441');
+    };
 
-          // Show loader
-          if($(timer.element).hasClass('clickable') || $scope.clickActive){
-            $scope.$apply(function() {
-              $scope.current = 100;
-            });
-            timer.loadtime = event.timeStamp;
+    var setLoadColor = function() {
+      $('#' + loaderId + ' path').attr('stroke', '#3E606F');
+    };
 
-            timer.markerX = x;
-            timer.markerY = y;
+    var setTimer = function(event) {
+      $scope.timer = {
+        x: event.pageX,
+        y: event.pageY,
+        totalX: event.pageX,
+        totalY: event.pageY,
+        timestamp: event.timeStamp,
+        samples: 1
+      };
+    };
 
-            loader.css({
-              display: 'block',
-            });
-          }
-          return;
-        }
-        if(event.timeStamp - timer.loadtime > Configs.clickDelay) {
+    $scope.mousemove = function(event) {
+      var loader = $('#' + loaderId);
+      if(loader.is(':animated')) {
+        return;
+      }
+      // console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
+      var x = event.pageX;
+      var y = event.pageY;
+      var timer = $scope.timer;
+      if(
+        angular.isUndefined(timer) ||
+        !within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
+        (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)
+      ) {
 
-          // Dwelling complete
+        // Cursor moved too far -> set new
+        $scope.$apply(function() {
+          $scope.current = 0;
+        });
+        loader.fadeOut(1000);
+        if(angular.isDefined(timer)) {
           $timeout.cancel(timer.loadPromise);
-          var markerX = timer.x-10;
-          var markerY = timer.y;
-          var clickElement = timer.element;
-          setTimer(event);
-          setClickColor();
-          $timeout(function() {
-            if($(clickElement).hasClass('clickable')) {
-              $(clickElement).click();
-            } else if($scope.clickActive) {
-              setMarker(markerX, markerY);
-              $scope.toggleClick();
-            }
-            loader.fadeOut(500, function() {
+        }
+        setTimer(event);
+      } else {
+        if(event.timeStamp - timer.timestamp > Configs.loadIconDelay) {
+
+          var mouseoverel = document.elementFromPoint(x, y);
+
+          if($(mouseoverel).hasClass('clickable')) {
+            timer.element = mouseoverel;
+          }
+
+          timer.samples += 1;
+          timer.totalX = timer.totalX + x;
+          timer.totalY = timer.totalY + y;
+          timer.x = timer.totalX / timer.samples;
+          timer.y = timer.totalY / timer.samples;
+
+          loader.css({
+            top: timer.y - 30,
+            left: timer.x - 40
+          });
+
+          if(!loader.is(':visible')) {
+
+            timer.loadPromise = $timeout(function() {
+              $scope.current = 0;
+              loader.fadeOut(1000);
+            }, Configs.clickDelay + 1000);
+
+            // Show loader
+            if($(timer.element).hasClass('clickable') || $scope.clickActive){
               $scope.$apply(function() {
-                $scope.current = 0;
-                setLoadColor();
-                timer.timestamp = Date.now();
+                $scope.current = 100;
               });
-            });
-          }, 500);
-          return;
+              timer.loadtime = event.timeStamp;
+
+              timer.markerX = x;
+              timer.markerY = y;
+
+              loader.css({
+                display: 'block',
+              });
+            }
+            return;
+          }
+          if(event.timeStamp - timer.loadtime > Configs.clickDelay) {
+
+            // Dwelling complete
+            $timeout.cancel(timer.loadPromise);
+            var markerX = timer.x-10;
+            var markerY = timer.y;
+            var clickElement = timer.element;
+            setTimer(event);
+            setClickColor();
+            $timeout(function() {
+              if($(clickElement).hasClass('clickable')) {
+                $(clickElement).click();
+              } else if($scope.clickActive) {
+                setMarker(markerX, markerY);
+                $scope.toggleClick();
+              }
+              loader.fadeOut(500, function() {
+                $scope.$apply(function() {
+                  $scope.current = 0;
+                  setLoadColor();
+                  timer.timestamp = Date.now();
+                });
+              });
+            }, 500);
+            return;
+          }
         }
       }
-    }
+    };
   };
 });
 

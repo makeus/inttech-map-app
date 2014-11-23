@@ -23,8 +23,7 @@
     <button class="btn btn-success startbtn" ng-click="start()">
       <span class="startbtntext loadingtext"><img class="loading" src="img/ajax-loader.svg" alt="loading"/></span>
     </button>
-
-    <section id="map" ng-class="{'invisible': hidemap}" class="invisible" ng-controller="MapCtrl">
+    <section eyetrackermovement id="map" ng-class="{'invisible': hidemap}" class="invisible" ng-controller="MapCtrl">
       <div class="map-section">
         <div
           id="loader"
@@ -35,6 +34,12 @@
           bgcolor="#eaeaea"
           radius="20"
           stroke="10">
+        </div>
+        <div class="mapcontrols ">
+          <div class="eyestatus up right">
+            <i class="lefteye glyphicon glyphicon-eye-open"></i>
+            <i class="righteye glyphicon glyphicon-eye-open"></i>
+          </div>
         </div>
         <div ng-if="showMove" class="mapcontrols movementcontrols">
           <div ng-click="moveup()" class="up vertical clickable"><i ng-click="moveup()" class="clickable glyphicon glyphicon-chevron-up"></i></div>
