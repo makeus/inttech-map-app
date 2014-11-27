@@ -203,3 +203,7 @@ button.startbtn i {
   height: 70px;
 }
 
+i.pointer {
+  z-index: 10000;
+
+}

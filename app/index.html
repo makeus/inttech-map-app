@@ -24,19 +24,34 @@
       <span class="startbtntext loadingtext"><img class="loading" src="img/ajax-loader.svg" alt="loading"/></span>
     </button>
     <section eyetrackermovement id="map" ng-class="{'invisible': hidemap}" class="invisible" ng-controller="MapCtrl">
-      <div class="map-section">
-        <div
-          id="loader"
-          round-progress
-          max="100"
-          current="current"
-          color="#3E606F"
-          bgcolor="#eaeaea"
-          radius="20"
-          stroke="10">
+
+    <i class="pointer glyphicon glyphicon-remove"></i>
+
+    <div class="controls clearfix">
+        <div ng-class="{'active': showMove}" ng-click="toggleMove()" id="left" class="selectbox clickable">
+          <i class="glyphicon glyphicon-move"></i>
         </div>
+        <div ng-class="{'active': showZoom}" ng-click="toggleZoom()" id="middle" class="selectbox clickable">
+          <i class="glyphicon glyphicon-zoom-in"></i>
+        </div>
+        <div ng-class="{'active': clickActive}" ng-click="toggleClick()" id="right" class="selectbox clickable">
+          <i class="glyphicon glyphicon-map-marker"></i>
+        </div>
+      </div>
+      <div
+        id="loader"
+        round-progress
+        max="100"
+        current="current"
+        color="#3E606F"
+        bgcolor="#eaeaea"
+        radius="20"
+        stroke="10">
+      </div>
+      <div class="map-section">
+
         <div class="mapcontrols ">
-          <div class="eyestatus up right">
+          <div class="eyestatus down right">
             <i class="lefteye glyphicon glyphicon-eye-open"></i>
             <i class="righteye glyphicon glyphicon-eye-open"></i>
           </div>
@@ -53,18 +68,8 @@
         </div>
         <div ui-map="myMap" ui-event="{'map-click': 'addMarker($event, $params)'}" ui-options="mapOptions" class="map-canvas"></div>
       </div>
-      <div class="controls clearfix">
-        <div ng-class="{'active': showMove}" ng-click="toggleMove()" id="left" class="selectbox clickable">
-          <i class="glyphicon glyphicon-move"></i>
-        </div>
-        <div ng-class="{'active': showZoom}" ng-click="toggleZoom()" id="middle" class="selectbox clickable">
-          <i class="glyphicon glyphicon-zoom-in"></i>
-        </div>
-        <div ng-class="{'active': clickActive}" ng-click="toggleClick()" id="right" class="selectbox clickable">
-          <i class="glyphicon glyphicon-map-marker"></i>
-        </div>
-      </div>
-      <button ng-click="end()" class="top left disconnect clickable btn btn-danger"><i class="glyphicon glyphicon-remove"></i></button>
+
+      <!-- <button ng-click="end()" class="top left disconnect clickable btn btn-danger"><i class="glyphicon glyphicon-remove"></i></button> -->
     </section>
 
     <!-- build:js(.) scripts/oldieshim.js -->

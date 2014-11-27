@@ -3,7 +3,7 @@
 angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-websocket'])
 
 .constant('Configs', {
-  distance: 200,
+  distance: 300,
   loadIconDelay: 500,
   clickDelay: 800,
   startX: 60.2042172,
@@ -15,7 +15,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 .config(function(WebSocketProvider){
   WebSocketProvider
     .prefix('')
-    .uri('ws://localhost:8080/tracker-adapter/tracker');
+    // .uri('ws://localhost:8080/tracker-adapter/tracker');
+    .uri('ws://echo.websocket.org');
 })
 
 .controller('MainCtrl', function ($scope, WebSocket, Configs) {
@@ -229,26 +230,35 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     };
 
     $scope.mousemove = function(event) {
+      if($scope.timer) {
+
+        $('.pointer').css({
+          position: 'absolute',
+          left: $scope.timer.x + 1,
+          top: $scope.timer.y + 1
+        });
+      }
+
+
       var loader = $('#' + loaderId);
       if(loader.is(':animated')) {
         return;
       }
-      // console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
+      console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
       var x = event.pageX;
       var y = event.pageY;
       var timer = $scope.timer;
       if(
-        angular.isUndefined(timer) ||
+        !timer ||
         !within(timer.x, timer.y, x, y, Configs.distance, Configs.distance) ||
         (timer.loadtime && event.timeStamp - timer.loadtime > Configs.clickDelay + 1000)
       ) {
-
         // Cursor moved too far -> set new
         $scope.$apply(function() {
           $scope.current = 0;
         });
         loader.fadeOut(1000);
-        if(angular.isDefined(timer)) {
+        if(timer) {
           $timeout.cancel(timer.loadPromise);
         }
         setTimer(event);
@@ -268,8 +278,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
           timer.y = timer.totalY / timer.samples;
 
           loader.css({
-            top: timer.y - 30,
-            left: timer.x - 40
+            top: timer.y - 40,
+            left: timer.x - 30
           });
 
           if(!loader.is(':visible')) {
@@ -299,8 +309,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 
             // Dwelling complete
             $timeout.cancel(timer.loadPromise);
-            var markerX = timer.x-10;
-            var markerY = timer.y;
+            var markerX = timer.x;
+            var markerY = timer.y - 0.20 * $(window).height();
             var clickElement = timer.element;
             setTimer(event);
             setClickColor();
