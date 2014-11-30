@@ -19,13 +19,10 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     .uri('ws://echo.websocket.org');
 })
 
-.controller('MainCtrl', function ($scope, WebSocket, Configs) {
+.controller('MainCtrl', function ($scope, WebSocket) {
 
   $scope.isConnected = false;
   $scope.hidemap = true;
-
-  var previousX;
-  var previousY;
 
   WebSocket.onmessage(function(message) {
     if(angular.isUndefined(message.data)) {
@@ -48,16 +45,11 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
         $('.righteye').css('color', 'red');
       }
 
-      // Ignore the first value outside the distance
-      if(Math.abs(data.x - previousX) < Configs.distance && Math.abs(data.y - previousY) < Configs.distance) {
-        $('#map').trigger('mousemove', {
-          timeStamp: Date.now(),
-          pageY: y,
-          pageX: x
-        });
-      }
-      previousY = data.y;
-      previousX = data.x;
+      $('#map').trigger('mousemove', {
+        timeStamp: Date.now(),
+        pageY: y,
+        pageX: x
+      });
     }
   });
 
@@ -231,7 +223,7 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 
     $scope.mousemove = function(event) {
       if($scope.timer) {
-
+        $timeout.cancel($scope.timer.loadPromise);
         $('.pointer').css({
           position: 'absolute',
           left: $scope.timer.x + 1,
@@ -239,11 +231,11 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
         });
       }
 
-
       var loader = $('#' + loaderId);
       if(loader.is(':animated')) {
         return;
       }
+
       console.log('mousemove triggered on x: ' + event.pageX + ' y: ' + event.pageY);
       var x = event.pageX;
       var y = event.pageY;
