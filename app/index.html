@@ -67,9 +67,10 @@
           <div ng-click="zoomin()" class="bottom clickable"><i ng-click="zoomin()" class="clickable glyphicon glyphicon-plus-sign"></i></div>
         </div>
         <div ui-map="myMap" ui-event="{'map-click': 'addMarker($event, $params)'}" ui-options="mapOptions" class="map-canvas"></div>
+
       </div>
 
-      <!-- <button ng-click="end()" class="top left disconnect clickable btn btn-danger"><i class="glyphicon glyphicon-remove"></i></button> -->
+      <button ng-click="" ng-if="marker1 && marker2" class="complete clickable btn btn-primary"><i class="glyphicon glyphicon-ok"></i></button>
     </section>
 
     <!-- build:js(.) scripts/oldieshim.js -->

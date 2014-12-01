@@ -187,15 +187,28 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
       return proj.fromPointToLatLng(point);
     };
 
+    var oldest = true;
     var setMarker = function(x, y) {
       var latLng = fromPixelToLatLng({x: x, y: y});
-      if(angular.isUndefined($scope.marker)) {
-        $scope.marker = new google.maps.Marker({
-          position: latLng,
-          map: $scope.myMap
-        });
+      if(!$scope.marker1 || !$scope.marker2) {
+        if(oldest) {
+          $scope.marker1 = new google.maps.Marker({
+            position: latLng,
+            map: $scope.myMap
+          });
+        } else {
+          $scope.marker2 = new google.maps.Marker({
+            position: latLng,
+            map: $scope.myMap
+          });
+        }
       }
-      $scope.marker.setPosition(latLng);
+      if(oldest) {
+        $scope.marker1.setPosition(latLng);
+      } else {
+        $scope.marker2.setPosition(latLng);
+      }
+      oldest = !oldest;
     };
 
     var within = function(x1, y1, x2, y2, distanceX, distanceY) {
@@ -212,7 +225,7 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 
     var setTimer = function(event) {
       if($scope.timer) {
-        $timeout.cancel(timer.loadPromise);
+        $timeout.cancel($scope.timer.loadPromise);
       }
       $scope.timer = {
         x: event.pageX,
