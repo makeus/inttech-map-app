@@ -156,6 +156,22 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     }
     $scope.markers = [];
   };
+
+  $scope.toReittiopas = function() {
+    var from = $scope.marker1.position;
+    var to = $scope.marker2.position;
+
+    var geocoder = new google.maps.Geocoder();
+
+    geocoder.geocode({ location: from }, function(fromGeo) {
+      geocoder.geocode({ location: to }, function(toGeo) {
+        var fromFrag = "poi*" + fromGeo[0].formatted_address + "*" + from.lng() + "*" + from.lat();
+        var toFrag = "poi*" + toGeo[0].formatted_address + "*" + to.lng() + "*" + to.lat();
+        var url = "http://www.reittiopas.fi?from=" + fromFrag + "&to=" + toFrag;
+        window.open(url);
+      });
+    });
+  }
 })
 
 .directive('eyetrackermovement', function ($timeout, Configs) {
