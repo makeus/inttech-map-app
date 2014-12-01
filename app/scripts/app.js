@@ -15,8 +15,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 .config(function(WebSocketProvider){
   WebSocketProvider
     .prefix('')
-    // .uri('ws://localhost:8080/tracker-adapter/tracker');
-    .uri('ws://echo.websocket.org');
+    .uri('ws://localhost:8080/tracker-adapter/tracker');
+    // .uri('ws://echo.websocket.org');
 })
 
 .controller('MainCtrl', function ($scope, WebSocket) {
@@ -211,6 +211,9 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
     };
 
     var setTimer = function(event) {
+      if($scope.timer) {
+        $timeout.cancel(timer.loadPromise);
+      }
       $scope.timer = {
         x: event.pageX,
         y: event.pageY,
