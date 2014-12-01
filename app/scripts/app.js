@@ -15,8 +15,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 .config(function(WebSocketProvider){
   WebSocketProvider
     .prefix('')
-    //.uri('ws://localhost:8080/tracker-adapter/tracker');
-     .uri('ws://echo.websocket.org');
+    .uri('ws://localhost:8080/tracker-adapter/tracker');
+    //.uri('ws://echo.websocket.org');
 })
 
 .controller('MainCtrl', function ($scope, WebSocket) {
