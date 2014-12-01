@@ -8,6 +8,7 @@
     "bootstrap": "~3.2.0",
     "angular-ui-map": "~0.5.0",
     "underscore": "~1.7.0",
+    "underscore.string": "2.4.0",
     "angular-svg-round-progressbar": "~0.1.0",
     "angular-websocket": "~0.0.5"
   },

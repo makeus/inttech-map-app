@@ -15,8 +15,8 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 .config(function(WebSocketProvider){
   WebSocketProvider
     .prefix('')
-    .uri('ws://localhost:8080/tracker-adapter/tracker');
-    // .uri('ws://echo.websocket.org');
+    //.uri('ws://localhost:8080/tracker-adapter/tracker');
+     .uri('ws://echo.websocket.org');
 })
 
 .controller('MainCtrl', function ($scope, WebSocket) {
@@ -165,9 +165,24 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
 
     geocoder.geocode({ location: from }, function(fromGeo) {
       geocoder.geocode({ location: to }, function(toGeo) {
-        var fromFrag = "poi*" + fromGeo[0].formatted_address + "*" + from.lng() + "*" + from.lat();
-        var toFrag = "poi*" + toGeo[0].formatted_address + "*" + to.lng() + "*" + to.lat();
-        var url = "http://www.reittiopas.fi?from=" + fromFrag + "&to=" + toFrag;
+        /*
+        var formatCoord = function(coord) {
+          var num = Math.trunc(coord);
+          var frac = coord - num;
+
+          return _.string.sprintf("%02d%s", num, _.string.sprintf("%.5f", frac).replace("0.", ""));
+        }
+
+        var fromFrag = _.string.sprintf("poi*%s*%s*%s",
+                                        "foo", //fromGeo[0].formatted_address,
+                                        formatCoord(from.lng()),
+                                        formatCoord(from.lat()));
+        var toFrag = _.string.sprintf("poi*%s*%s*%s",
+                                      "bar", //toGeo[0].formatted_address,
+                                      formatCoord(to.lng()),
+                                      formatCoord(to.lat()));
+                                      */
+        var url = "http://www.reittiopas.fi/?from_in=" + fromGeo[0].formatted_address + "&to_in=" + toGeo[0].formatted_address;
         window.open(url);
       });
     });
@@ -203,28 +218,25 @@ angular.module('int14App', ['ui.map', 'angular-svg-round-progress', 'angular-web
       return proj.fromPointToLatLng(point);
     };
 
-    var oldest = true;
     var setMarker = function(x, y) {
       var latLng = fromPixelToLatLng({x: x, y: y});
-      if(!$scope.marker1 || !$scope.marker2) {
-        if(oldest) {
-          $scope.marker1 = new google.maps.Marker({
-            position: latLng,
-            map: $scope.myMap
-          });
-        } else {
-          $scope.marker2 = new google.maps.Marker({
-            position: latLng,
-            map: $scope.myMap
-          });
-        }
+
+      if(!$scope.marker1) {
+        $scope.marker1 = new google.maps.Marker({
+          position: latLng,
+          map: $scope.myMap
+        });
       }
-      if(oldest) {
-        $scope.marker1.setPosition(latLng);
-      } else {
+      else if(!$scope.marker2) {
+        $scope.marker2 = new google.maps.Marker({
+          position: latLng,
+          map: $scope.myMap
+        });
+      }
+      else {
+        $scope.marker1.setPosition($scope.marker2.getPosition());
         $scope.marker2.setPosition(latLng);
       }
-      oldest = !oldest;
     };
 
     var within = function(x1, y1, x2, y2, distanceX, distanceY) {
